@@ -83,3 +83,75 @@ if (contactForm) {
     contactForm.reset();
   });
 }
+
+const photoGallery = document.querySelector("[data-photo-gallery]");
+if (photoGallery) {
+  const emptyState = document.querySelector("[data-gallery-empty]");
+  const photoCount = document.querySelector("[data-photo-count]");
+  const lightbox = document.querySelector("[data-lightbox]");
+  const lightboxImage = document.querySelector("[data-lightbox-image]");
+  const lightboxClose = document.querySelector("[data-lightbox-close]");
+  const discoveredPhotos = new Set(window.projectifyPhotos || []);
+  const extensions = ["jpg", "jpeg", "png", "webp"];
+
+  for (let index = 1; index <= 80; index += 1) {
+    const padded = String(index).padStart(2, "0");
+    extensions.forEach((extension) => {
+      discoveredPhotos.add(`assets/photos/photo-${padded}.${extension}`);
+      discoveredPhotos.add(`assets/photos/photo-${index}.${extension}`);
+      discoveredPhotos.add(`assets/photos/projectify-${padded}.${extension}`);
+      discoveredPhotos.add(`assets/photos/projectify-${index}.${extension}`);
+    });
+  }
+
+  let loadedPhotos = 0;
+
+  function openLightbox(source, alt) {
+    if (!lightbox || !lightboxImage) return;
+    lightboxImage.src = source;
+    lightboxImage.alt = alt;
+    lightbox.classList.add("open");
+    lightbox.setAttribute("aria-hidden", "false");
+  }
+
+  function closeLightbox() {
+    if (!lightbox || !lightboxImage) return;
+    lightbox.classList.remove("open");
+    lightbox.setAttribute("aria-hidden", "true");
+    lightboxImage.src = "";
+  }
+
+  Array.from(discoveredPhotos).forEach((source) => {
+    const image = new Image();
+    image.src = source;
+    image.alt = "Projectify GJU gallery photo";
+
+    image.addEventListener("load", () => {
+      const card = document.createElement("button");
+      card.className = "photo-card";
+      card.type = "button";
+      card.setAttribute("aria-label", "Open Projectify gallery photo");
+      card.appendChild(image);
+      card.addEventListener("click", () => openLightbox(source, image.alt));
+      photoGallery.appendChild(card);
+
+      loadedPhotos += 1;
+      if (emptyState) emptyState.style.display = "none";
+      if (photoCount) photoCount.textContent = `${loadedPhotos} photo${loadedPhotos === 1 ? "" : "s"}`;
+    });
+  });
+
+  if (lightboxClose) {
+    lightboxClose.addEventListener("click", closeLightbox);
+  }
+
+  if (lightbox) {
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox) closeLightbox();
+    });
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeLightbox();
+  });
+}
